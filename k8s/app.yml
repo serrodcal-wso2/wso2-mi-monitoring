@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: employee
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: employee
+  template:
+    metadata:
+      labels:
+        app: employee
+    spec:
+      containers:
+        - name: employee
+          image: serrodcal/quarkus-arch-employee:1.0.0-native-distroless
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: QUARKUS_DATASOURCE_REACTIVE_URL
+              value: postgresql://database:5432/quarkus_test
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 4
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+spec:
+  ports:
+    - name: http
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: database
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+        - name: database
+          image: postgres:10.15-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_USER
+              value: quarkus_test
+            - name: POSTGRES_PASSWORD
+              value: quarkus_test
+            - name: POSTGRES_DB
+              value: quarkus_test
+          readinessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "quarkus_test", "-d", "quarkus_test", "-c", "SELECT 1"]
+            initialDelaySeconds: 15
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command: ["psql", "-w", "-U", "quarkus_test", "-d", "quarkus_test", "-c", "SELECT 1"]
+            initialDelaySeconds: 45
+            timeoutSeconds: 2

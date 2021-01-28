@@ -67,12 +67,8 @@ spec:
             - name: key-mappings-config
               mountPath: /home/wso2carbon/wso2mi-1.2.0/repository/resources/conf/key-mappings.json
               subPath: key-mappings.json
-            - name: echo-api-config
-              mountPath: /home/wso2carbon/wso2mi-1.2.0/repository/deployment/server/synapse-configs/default/api/Echo.xml
-              subPath: Echo.xml
-            - name: hello-api-config
-              mountPath: /home/wso2carbon/wso2mi-1.2.0/repository/deployment/server/synapse-configs/default/api/Hello.xml
-              subPath: Hello.xml
+            - name: api-config
+              mountPath: /home/wso2carbon/wso2mi-1.2.0/repository/deployment/server/synapse-configs/default/api
       volumes:
         - name: observability-config
           configMap:
@@ -86,18 +82,16 @@ spec:
             items:
             - key: key-mappings.json
               path: key-mappings.json
-        - name: echo-api-config
+        - name: api-config
           configMap:
             name: wso2-ei-cm
             items:
               - key: Echo.xml
                 path: Echo.xml
-        - name: hello-api-config
-          configMap:
-            name: wso2-ei-cm
-            items:
               - key: Hello.xml
                 path: Hello.xml
+              - key: Employee.xml
+                path: Employee.xml
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -133,6 +127,40 @@ data:
     [[synapse_handlers]]
     name="MetricHandler"
     class="org.wso2.micro.integrator.observability.metric.handler.MetricHandler"
+  Employee.xml: |-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <api context="/api/v1/employee" name="Employee" statistics="enable" trace="enable" xmlns="http://ws.apache.org/ns/synapse">
+        <resource methods="GET">
+            <inSequence>
+                <log level="full">
+                    <property name="**** [API] - IN" value="api/v1/employee"/>
+                </log>
+                <send>
+                    <endpoint>
+                        <http method="get" uri-template="http://employee:8080/api/v1/employee">
+                            <suspendOnFailure>
+                                <initialDuration>-1</initialDuration>
+                                <progressionFactor>-1</progressionFactor>
+                                <maximumDuration>0</maximumDuration>
+                            </suspendOnFailure>
+                            <markForSuspension>
+                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                            </markForSuspension>
+                        </http>
+                    </endpoint>
+                </send>
+            </inSequence>
+            <outSequence>
+              <log level="full">
+                <property name="**** [API] - OUT" value="api/v1/employee"/>
+              </log>
+              <send/>
+            </outSequence>
+            <faultSequence>
+                <log/>
+            </faultSequence>
+        </resource>
+    </api>
   Hello.xml: |-
     <?xml version="1.0" encoding="UTF-8"?>
     <api context="/hello" name="Hello" statistics="enable" trace="enable" xmlns="http://ws.apache.org/ns/synapse">
