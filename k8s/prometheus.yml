@@ -63,3 +63,7 @@ data:
         static_configs:
           - targets: ['micro-integrator:9201']
         metrics_path: "metric-service/metrics"
+      - job_name: 'jmx'
+        static_configs:
+          - targets:
+            - jmx-exporter:5556

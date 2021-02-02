@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jmx-exporter
+spec:
+  ports:
+    - name: http
+      port: 5556
+      targetPort: 5556
+      protocol: TCP
+  selector:
+    app: jmx-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmx-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jmx-exporter
+  template:
+    metadata:
+      labels:
+        app: jmx-exporter
+    spec:
+      containers:
+        - name: jmx-exporter
+          image: sscaling/jmx-prometheus-exporter:0.12.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5556
+              protocol: TCP
+          env:
+            - name: CONFIG_YML
+              value: "/tmp/config/config.yml"
+          volumeMounts:
+            - name: jmx-config
+              mountPath: /tmp/config/config.yml
+              subPath: config.yml
+      volumes:
+        - name: jmx-config
+          configMap:
+            name: config-cm
+            items:
+              - key: config.yml
+                path: config.yml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-cm
+data:
+  config.yml: |-
+    hostPort: micro-integrator:9010
+    username:
+    password:
+
+    rules:
+    - pattern: ".*"

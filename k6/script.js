@@ -7,8 +7,8 @@ export const requests = new Counter('http_reqs');
 // target is the number of VUs you are aiming for
 export const options = {
   stages: [
-    { target: 20, duration: '1m' },
-    { target: 15, duration: '1m' },
+    { target: 5, duration: '3m' },
+    { target: 10, duration: '2m' },
     { target: 0, duration: '1m' },
   ],
   thresholds: {
@@ -17,6 +17,7 @@ export const options = {
 };
 export default function () {
   // our HTTP request, note that we are saving the response to res, which can be accessed later
+  //const res = http.get('http://localhost:8290/hello');
   const res = http.get('http://localhost:8290/api/v1/employee');
   const checkRes = check(res, {
     'status is 200': (r) => r.status === 200,

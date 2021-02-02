@@ -20,6 +20,10 @@ spec:
       port: 9201
       targetPort: 9201
       protocol: TCP
+    - name: mi-jmx
+      port: 9010
+      targetPort: 9010
+      protocol: TCP
   selector:
     app: micro-integrator
 ---
@@ -50,9 +54,11 @@ spec:
               protocol: TCP
             - containerPort: 9201
               protocol: TCP
+            - containerPort: 9010
+              protocol: TCP
           env: 
             - name: JAVA_OPTS
-              value: "-DenablePrometheusApi=true"
+              value: "-DenablePrometheusApi=true -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=0.0.0.0"
           resources:
             requests:
               memory: 500M
